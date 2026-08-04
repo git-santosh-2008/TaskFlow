@@ -12,8 +12,6 @@ from sqlalchemy.orm import relationship
 from database import Base
 
 
-
-
 class User(Base):
     __tablename__ = "users"
 
@@ -25,8 +23,6 @@ class User(Base):
 
     # Relationship: User -> Projects
     projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
-
-
 
 
 class Project(Base):

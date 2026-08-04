@@ -4,15 +4,12 @@ Custom Middleware
 Logs method, path, processing time and status code for every request.
 """
 
-
 import time
 import logging
 from fastapi import Request
 
 
 logger = logging.getLogger("api_logger")
-
-
 
 
 async def log_requests(request: Request, call_next):

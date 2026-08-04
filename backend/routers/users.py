@@ -8,15 +8,11 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-
 from dependencies import get_db
 from models import User
 from schemas import UserCreate, UserResponse
 
-
 router = APIRouter(prefix="/users", tags=["Users"])
-
-
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -26,8 +22,6 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     return db_user
-
-
 
 
 @router.get("", response_model=List[UserResponse], status_code=status.HTTP_200_OK)
