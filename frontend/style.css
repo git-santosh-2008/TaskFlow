@@ -1,0 +1,420 @@
+/* =========================================================
+   Design tokens
+   ========================================================= */
+:root {
+  --ink: #faf7f2;
+  --paper: #f2ecdd;
+  --paper-dim: #e4dbc5;
+  --text-dark: #00090a;
+  --text-light: #000000;
+
+  --high: #e1572c;
+  --medium: #d9a441;
+  --low: #4f9d9d;
+  --error: #c63b3b;
+
+  --font-display: "Bricolage Grotesque", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+/* =========================================================
+   Reset & base
+   ========================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text-light);
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+h2, h3 {
+  margin: 0;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Visible keyboard focus everywhere */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--medium);
+  outline-offset: 2px;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   Sticky header
+   ========================================================= */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--ink);
+  border-bottom: 2px solid var(--medium);
+  padding: 16px 32px;
+}
+
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.brand-mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.brand-tagline {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--low);
+  margin-left: 10px;
+}
+
+.priority-legend {
+  list-style: none;
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-high .legend-dot { background: var(--high); }
+.legend-medium .legend-dot { background: var(--medium); }
+.legend-low .legend-dot { background: var(--low); }
+
+/* =========================================================
+   Page layout
+   ========================================================= */
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.section-heading {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 16px;
+}
+
+/* =========================================================
+   Add-task form (box model: padding + border + margin visible)
+   ========================================================= */
+.add-task-section {
+  background: var(--paper);
+  color: var(--text-dark);
+  padding: 24px 28px;
+  border: 2px solid var(--text-dark);
+  margin: 0;
+  border-radius: 4px;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.15);
+}
+
+.task-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 140px;
+}
+
+label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dark);
+}
+
+input,
+select {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 2px solid var(--text-dark);
+  border-radius: 2px;
+  background: #ffffff;
+  color: var(--text-dark);
+}
+
+.field-error {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--error);
+  min-height: 1em;
+}
+
+.btn-add {
+  font-family: var(--font-display);
+  font-weight: 600;
+  background: var(--high);
+  color: #ffffff;
+  border: 2px solid var(--text-dark);
+  padding: 11px 22px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+}
+
+.btn-add:active {
+  transform: translateY(0);
+}
+
+.btn-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* =========================================================
+   Task list (box model: padding + border + margin visible)
+   ========================================================= */
+.task-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.task-count {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--low);
+}
+
+.task-list {
+  padding: 20px;
+  border: 2px dashed var(--low);
+  margin: 0;
+  border-radius: 6px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.task-item {
+  background: var(--paper);
+  color: var(--text-dark);
+  padding: 16px 18px;
+  border: 2px solid var(--text-dark);
+  border-left-width: 8px;
+  margin: 0;
+  border-radius: 2px;
+}
+
+.task-item.priority-high { border-left-color: var(--high); }
+.task-item.priority-medium { border-left-color: var(--medium); }
+.task-item.priority-low { border-left-color: var(--low); }
+
+.task-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.task-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-icon {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1.5px solid var(--text-dark);
+  padding: 6px 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  color: var(--text-dark);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-icon:hover {
+  background: var(--text-dark);
+  color: var(--paper);
+}
+
+.btn-delete:hover {
+  background: var(--error);
+  border-color: var(--error);
+  color: #ffffff;
+}
+
+/* Dashed perforation divider — signature element */
+.task-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(20, 40, 42, 0.3);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.task-priority-badge {
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: #ffffff;
+}
+
+.task-priority-badge.priority-high { background: var(--high); }
+.task-priority-badge.priority-medium { background: var(--medium); }
+.task-priority-badge.priority-low { background: var(--low); }
+
+.empty-state {
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--low);
+  padding: 24px;
+}
+
+/* Inline edit mode */
+.task-item.editing .edit-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.task-item.editing input,
+.task-item.editing select {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* =========================================================
+   Breakpoint 1 — tablets (≤768px)
+   ========================================================= */
+@media (max-width: 768px) {
+  .page {
+    padding: 20px;
+  }
+
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .task-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .field-group {
+    min-width: 0;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Breakpoint 2 — phones (≤480px)
+   ========================================================= */
+@media (max-width: 480px) {
+  .site-header {
+    padding: 12px 16px;
+  }
+
+  .brand-mark {
+    font-size: 1.2rem;
+  }
+
+  .brand-tagline {
+    display: none;
+  }
+
+  .add-task-section,
+  .task-list {
+    padding: 14px;
+  }
+
+  .task-main {
+    flex-direction: column;
+  }
+
+  .task-actions {
+    width: 100%;
+  }
+
+  .btn-icon {
+    flex: 1;
+  }
+
+  .section-heading {
+    font-size: 0.95rem;
+  }
+}

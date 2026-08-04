@@ -33,7 +33,7 @@ app = FastAPI(title="TaskFlow Backend API")
 # CORS Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5500", "http://127.0.0.1:8000"],
+    allow_origins=["http://127.0.0.1:5500", "http://127.0.0.1:8000"],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
     allow_headers=["Content-Type", "Authorization"],

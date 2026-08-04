@@ -1,0 +1,17 @@
+.env
+.venv
+__pycache__
+
+
+
+# Environment variables (contains your real Supabase password — never commit this)
+.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Local SQLite fallback database
+taskflow.db

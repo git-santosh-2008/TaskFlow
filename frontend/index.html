@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark">TaskFlow</span>
+      <span class="brand-tagline">tasks, moving</span>
+    </div>
+    <ul class="priority-legend" aria-hidden="true">
+      <li class="legend-item legend-high"><span class="legend-dot"></span>High</li>
+      <li class="legend-item legend-medium"><span class="legend-dot"></span>Medium</li>
+      <li class="legend-item legend-low"><span class="legend-dot"></span>Low</li>
+    </ul>
+  </div>
+</header>
+
+<main class="page">
+
+  <section class="add-task-section" aria-labelledby="add-task-heading">
+    <h2 id="add-task-heading" class="section-heading">Add a task</h2>
+
+    <form id="add-task-form" class="task-form" novalidate>
+      <div class="field-group field-title">
+        <label for="task-title">Title</label>
+        <input type="text" id="task-title" name="title" placeholder="What needs doing?" autocomplete="off">
+        <span class="field-error" id="title-error" role="alert"></span>
+      </div>
+
+      <div class="field-group field-due">
+        <label for="task-due-date">Due date</label>
+        <input type="text" id="task-due-date" name="dueDate" placeholder="e.g. 2026-08-10 or next friday" autocomplete="off">
+      </div>
+
+      <div class="field-group field-priority">
+        <label for="task-priority">Priority</label>
+        <select id="task-priority" name="priority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-add">Add task</button>
+    </form>
+  </section>
+
+  <section class="task-list-section" aria-labelledby="task-list-heading">
+    <div class="task-list-header">
+      <h2 id="task-list-heading" class="section-heading">Your tasks</h2>
+      <span class="task-count" id="task-count">0 tasks</span>
+    </div>
+
+    <div id="task-list" class="task-list" aria-live="polite">
+      <!-- Task items are rendered here in script.js via createElement/appendChild -->
+    </div>
+
+    <p id="empty-state" class="empty-state" hidden>Nothing here yet — add your first task above.</p>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
