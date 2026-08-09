@@ -1,0 +1,27 @@
+Section 2 - Task 5 benchmark results
+(counts produced by the exact functions behind /tasks?sort= and /tasks/search)
+==============================================================================
+
+--- n = 10 tasks ---
+insertion_sort_count  (sort tasks by priority):              19 comparisons
+insertion_sort_count  (sort search index by title):           9 comparisons
+binary_search_count   (title present, mid element):           3 comparisons  (index=5)
+binary_search_count   (title absent):                         4 comparisons  (index=None)
+linear_search_count   (title present, mid element):           6 comparisons  (index=5)
+linear_search_count   (title absent):                        10 comparisons  (index=None)
+
+--- n = 500 tasks ---
+insertion_sort_count  (sort tasks by priority):          42,913 comparisons
+insertion_sort_count  (sort search index by title):         499 comparisons
+binary_search_count   (title present, mid element):           8 comparisons  (index=250)
+binary_search_count   (title absent):                         9 comparisons  (index=None)
+linear_search_count   (title present, mid element):         251 comparisons  (index=250)
+linear_search_count   (title absent):                       500 comparisons  (index=None)
+
+--- n = 3000 tasks ---
+insertion_sort_count  (sort tasks by priority):       1,543,975 comparisons
+insertion_sort_count  (sort search index by title):       2,999 comparisons
+binary_search_count   (title present, mid element):          11 comparisons  (index=1500)
+binary_search_count   (title absent):                        12 comparisons  (index=None)
+linear_search_count   (title present, mid element):       1,501 comparisons  (index=1500)
+linear_search_count   (title absent):                     3,000 comparisons  (index=None)

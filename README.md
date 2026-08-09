@@ -8,7 +8,10 @@ A full-stack task manager built as a learning/assessment project:
 
 ```
 taskflow/
-├── README.md          ← you are here
+├── README.md          ← you are here (setup, endpoints, Section 2 write-up)
+├── seed.py             — Section 2: benchmark seeding + comparison counts
+├── check_algorithms.py  — Section 2: automated PASS/FAIL checks
+├── results.txt            — Section 2: saved raw benchmark output (from seed.py)
 ├── backend/
 │   ├── main.py             — app entry point, CORS, middleware, routers
 │   ├── database.py          — SQLAlchemy engine/session, reads DATABASE_URL
@@ -16,18 +19,25 @@ taskflow/
 │   ├── schemas.py             — Pydantic request/response models + validators
 │   ├── dependencies.py         — shared get_db() dependency
 │   ├── middleware.py            — request logging middleware
+│   ├── algorithms.py             — Section 2: insertion_sort/binary_search/linear_search engine
 │   ├── routers/
 │   │   ├── users.py
 │   │   ├── projects.py
-│   │   └── tasks.py
+│   │   └── tasks.py                — includes the Section 2 sort/search endpoints
 │   ├── requirements.txt
 │   ├── .env.example              — template for your Supabase connection string
 │   └── .gitignore
 └── frontend/
     ├── index.html         — header, add-task form, task list container
-    ├── styles.css          — box-model styling, sticky header, 2 breakpoints
-    └── script.js            — rendering, CRUD, validation, localStorage cache
+    ├── style.css          — box-model styling, sticky header, 2 breakpoints
+    └── app.js            — rendering, CRUD, validation, localStorage cache
 ```
+
+`seed.py` and `check_algorithms.py` live at the repo root (not inside
+`backend/`) because they're standalone dev/verification tools, not part
+of the running app — but they import the real engine straight out of
+`backend/algorithms.py`, so they're always testing the exact same code
+the API uses.
 
 ---
 
@@ -158,6 +168,9 @@ committed to git.
 breakdown via SQL `COUNT`+`GROUP BY`)
 
 **Tasks** — `POST /tasks` (201, 404 if project missing), `GET /tasks` (200),
+`GET /tasks?sort=priority|due_date` (200 — sorted via our own
+`insertion_sort`, see Section 7), `GET /tasks/search?title=X&algo=binary|linear`
+(200/404 — via our own `binary_search`/`linear_search`, see Section 7),
 `GET /tasks/{id}` (200/404), `PUT /tasks/{id}` (200/404), `DELETE /tasks/{id}`
 (200/404)
 
@@ -192,3 +205,118 @@ return `422` automatically via Pydantic validation.
   page never shows a blank list while loading, but the backend/Supabase
   database is always the source of truth.
 
+---
+
+## 7. Assignment Section 2 — Sorting & Search Engine
+
+`backend/algorithms.py` implements three hand-rolled functions —
+`insertion_sort`, `binary_search`, `linear_search` — plus three
+comparison-counting versions (`*_count`) used only by `seed.py`'s
+benchmark below. **The API never calls Python's built-in
+`sorted()`/`list.sort()`** — the two endpoints below are powered
+entirely by these functions, operating on real rows fetched from the
+database in the same request.
+
+### New endpoints
+
+| Method | Path                                          | Status | Description |
+|--------|-----------------------------------------------|--------|--------------|
+| GET    | `/tasks?sort=priority`                        | 200    | Tasks ordered by priority, sorted by our own `insertion_sort()` |
+| GET    | `/tasks?sort=due_date`                        | 200    | Tasks ordered by due date, same engine |
+| GET    | `/tasks/search?title=X&algo=binary\|linear`    | 200/404 | Exact-title lookup via our own `binary_search()`/`linear_search()` |
+
+`GET /tasks/search` builds an in-memory `{"id","title"}` index from the
+real `tasks` table; for `algo=binary` the index is sorted first with
+`insertion_sort` and then searched with `binary_search`, for
+`algo=linear` it's searched unsorted with `linear_search`.
+
+Not-found convention: `binary_search`/`linear_search` return `None`
+(not `-1`) when no match exists — chosen because it can never be
+confused with a real index (index `0` is falsy but "found"), and reads
+clearly in `if position is None:` checks.
+
+### Time complexity
+
+| Function        | Best case | Worst case | Why |
+|------------------|-----------|------------|------|
+| `insertion_sort` | O(n)      | O(n²)      | Best case: input already sorted, inner `while` never shifts. Worst case: input reverse-sorted, every new element shifts past all previous ones. |
+| `binary_search`  | O(1)      | O(log n)   | Best case: target is the first element checked (the middle of the whole range). Worst case: target is absent, or found only after halving the range down to 1 element. |
+| `linear_search`  | O(1)      | O(n)       | Best case: target is the very first element. Worst case: target is last, or absent — every element gets checked. |
+
+### Benchmark results (Task 5)
+
+Run from the **repo root**:
+```bash
+python3 seed.py
+```
+This generates synthetic task dicts (same `title`/`priority`/`due_date`
+fields the real endpoints use) at three sizes, sorts/searches them with
+the counting wrappers, prints the raw comparison counts, and saves them
+to `results.txt`. Actual numbers from a real run:
+
+```
+--- n = 10 tasks ---
+insertion_sort_count  (sort tasks by priority):              19 comparisons
+insertion_sort_count  (sort search index by title):           9 comparisons
+binary_search_count   (title present, mid element):           3 comparisons  (index=5)
+binary_search_count   (title absent):                         4 comparisons  (index=None)
+linear_search_count   (title present, mid element):           6 comparisons  (index=5)
+linear_search_count   (title absent):                        10 comparisons  (index=None)
+
+--- n = 500 tasks ---
+insertion_sort_count  (sort tasks by priority):          42,913 comparisons
+insertion_sort_count  (sort search index by title):         499 comparisons
+binary_search_count   (title present, mid element):           8 comparisons  (index=250)
+binary_search_count   (title absent):                         9 comparisons  (index=None)
+linear_search_count   (title present, mid element):         251 comparisons  (index=250)
+linear_search_count   (title absent):                       500 comparisons  (index=None)
+
+--- n = 3000 tasks ---
+insertion_sort_count  (sort tasks by priority):       1,543,975 comparisons
+insertion_sort_count  (sort search index by title):       2,999 comparisons
+binary_search_count   (title present, mid element):          11 comparisons  (index=1500)
+binary_search_count   (title absent):                        12 comparisons  (index=None)
+linear_search_count   (title present, mid element):       1,501 comparisons  (index=1500)
+linear_search_count   (title absent):                     3,000 comparisons  (index=None)
+```
+
+Full output is also saved in `results.txt`.
+
+### Is sorting first worth it? (Task 6)
+
+The numbers above show two very different stories depending on the input
+order. Sorting the search index by title cost only 9 / 499 / 2,999
+comparisons at each size — essentially O(n) — because the synthetic
+titles were generated in ascending order, so `insertion_sort`'s best
+case kicked in. Sorting the *same-size* task list by priority (which is
+randomly distributed, not pre-ordered) cost 19 / 42,913 / 1,543,975
+comparisons — the O(n²) worst case, since ties and out-of-order values
+force real shifting. This is the core trade-off: **`insertion_sort`'s
+cost depends entirely on how sorted the input already is**, while
+`binary_search` stayed cheap regardless (3 → 8 → 11 comparisons across a
+300x size increase) because O(log n) barely grows.
+
+Given how a team actually uses TaskFlow — listing/sorting tasks
+repeatedly through the day, but adding or renaming tasks less often —
+paying the sort cost on every `GET /tasks?sort=...` call is reasonable
+at realistic team-sized task counts (tens to low hundreds), where even
+the worst-case O(n²) sort finishes in well under a millisecond of real
+work. It stops being worth it once a project's task list grows into the
+thousands with frequent re-sorts, where the 1.5M-comparison worst case
+becomes noticeable — at that scale, sorting once and reusing the sorted
+order (or switching to an O(n log n) algorithm) pays off far more than
+re-running `insertion_sort` on every list request. Binary search, by
+contrast, is worth its one-time sorting cost at almost any scale a real
+team would hit, since search happens far more often than the list is
+restructured.
+
+### Automated checks (Task 7)
+
+Run from the **repo root**:
+```bash
+python3 check_algorithms.py
+```
+Prints a `PASS`/`FAIL` line for every required case (empty-list sort,
+single-element sort, binary search at first/middle/last/absent, both
+counting wrappers' return shapes). A real run currently prints 13
+`PASS` lines and 0 `FAIL` lines.
