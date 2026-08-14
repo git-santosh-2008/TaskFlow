@@ -1,17 +1,21 @@
 /* =========================================================
-   Design tokens
+   Design tokens — light theme (white page background)
+
+   Accent colors (high/medium/low/error) are chosen dark enough to
+   work BOTH as text on white AND as a solid fill with white text on
+   top, so the same variable is safe to reuse in either role.
    ========================================================= */
 :root {
-  --ink: #faf7f2;
-  --paper: #f2ecdd;
-  --paper-dim: #e4dbc5;
-  --text-dark: #00090a;
-  --text-light: #000000;
+  --bg: #ffffff;
+  --surface: #f7f4ec;       /* card surface — warm off-white paper */
+  --surface-alt: #efe6d1;   /* slightly deeper surface (quick-add card) */
+  --text: #14282a;          /* primary text / strong borders */
+  --text-muted: #4b5a5b;
 
-  --high: #e1572c;
-  --medium: #d9a441;
-  --low: #4f9d9d;
-  --error: #c63b3b;
+  --high: #c2410c;    /* burnt coral — high priority */
+  --medium: #a1660a;  /* deep ochre — medium priority */
+  --low: #0f766e;     /* deep teal — low priority */
+  --error: #b91c1c;
 
   --font-display: "Bricolage Grotesque", sans-serif;
   --font-body: "Inter", sans-serif;
@@ -27,8 +31,8 @@
 
 body {
   margin: 0;
-  background: var(--ink);
-  color: var(--text-light);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-body);
   line-height: 1.5;
 }
@@ -65,8 +69,8 @@ select:focus-visible {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: var(--ink);
-  border-bottom: 2px solid var(--medium);
+  background: var(--bg);
+  border-bottom: 2px solid var(--text);
   padding: 16px 32px;
 }
 
@@ -85,6 +89,7 @@ select:focus-visible {
   font-weight: 700;
   font-size: 1.5rem;
   letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 .brand-tagline {
@@ -106,6 +111,7 @@ select:focus-visible {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  color: var(--text);
 }
 
 .legend-item {
@@ -143,19 +149,88 @@ select:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 16px;
+  color: var(--text);
+}
+
+/* =========================================================
+   Quick add (Section 3 — AI parse)
+   ========================================================= */
+.quick-add-section {
+  background: var(--surface-alt);
+  color: var(--text);
+  padding: 20px 28px;
+  border: 2px dashed var(--medium);
+  margin: 0;
+  border-radius: 4px;
+}
+
+.quick-add-section .section-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+}
+
+.ai-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  background: var(--medium);
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.quick-add-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.field-quick-add {
+  flex: 3;
+  min-width: 220px;
+}
+
+.field-quick-add label {
+  color: var(--text);
+}
+
+.field-quick-add input {
+  background: #ffffff;
+}
+
+.btn-quick-add {
+  background: var(--medium);
+  border-color: var(--text);
+  color: #ffffff;
+}
+
+.quick-add-hint {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 12px 0 0;
+}
+
+.quick-add-hint em {
+  color: var(--medium);
+  font-style: normal;
+  font-weight: 600;
 }
 
 /* =========================================================
    Add-task form (box model: padding + border + margin visible)
    ========================================================= */
 .add-task-section {
-  background: var(--paper);
-  color: var(--text-dark);
+  background: var(--surface);
+  color: var(--text);
   padding: 24px 28px;
-  border: 2px solid var(--text-dark);
+  border: 2px solid var(--text);
   margin: 0;
   border-radius: 4px;
-  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.15);
+  box-shadow: 6px 6px 0 rgba(20, 40, 42, 0.1);
 }
 
 .task-form {
@@ -178,7 +253,7 @@ label {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-dark);
+  color: var(--text);
 }
 
 input,
@@ -186,10 +261,10 @@ select {
   font-family: var(--font-body);
   font-size: 0.95rem;
   padding: 10px 12px;
-  border: 2px solid var(--text-dark);
+  border: 2px solid var(--text);
   border-radius: 2px;
   background: #ffffff;
-  color: var(--text-dark);
+  color: var(--text);
 }
 
 .field-error {
@@ -204,7 +279,7 @@ select {
   font-weight: 600;
   background: var(--high);
   color: #ffffff;
-  border: 2px solid var(--text-dark);
+  border: 2px solid var(--text);
   padding: 11px 22px;
   border-radius: 2px;
   cursor: pointer;
@@ -241,6 +316,114 @@ select {
   color: var(--low);
 }
 
+/* =========================================================
+   Toolbar (Section 2 — sort + exact-title search)
+   ========================================================= */
+.task-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 2px solid var(--text);
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--low);
+  margin-right: 2px;
+}
+
+.btn-toolbar {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #ffffff;
+  border: 1.5px solid var(--medium);
+  color: var(--text);
+  padding: 7px 12px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-toolbar:hover {
+  background: var(--medium);
+  color: #ffffff;
+}
+
+.btn-toolbar.active {
+  background: var(--medium);
+  color: #ffffff;
+}
+
+.btn-toolbar-ghost {
+  border-color: var(--low);
+}
+
+.btn-toolbar-ghost:hover {
+  background: var(--low);
+  color: #ffffff;
+}
+
+.search-group input,
+.search-group select {
+  padding: 7px 10px;
+  font-size: 0.85rem;
+  border: 1.5px solid var(--medium);
+  background: #ffffff;
+  color: var(--text);
+}
+
+.search-group input {
+  min-width: 160px;
+}
+
+.toolbar-status {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--medium);
+  background: rgba(161, 102, 10, 0.08);
+  border: 1px dashed var(--medium);
+  border-radius: 4px;
+  padding: 8px 14px;
+  margin: 0 0 14px;
+}
+
+.toolbar-status.status-error {
+  color: var(--error);
+  border-color: var(--error);
+  background: rgba(185, 28, 28, 0.06);
+}
+
+.toolbar-status-clear {
+  background: none;
+  border: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+}
+
 .task-list {
   padding: 20px;
   border: 2px dashed var(--low);
@@ -253,10 +436,10 @@ select {
 }
 
 .task-item {
-  background: var(--paper);
-  color: var(--text-dark);
+  background: var(--surface);
+  color: var(--text);
   padding: 16px 18px;
-  border: 2px solid var(--text-dark);
+  border: 2px solid var(--text);
   border-left-width: 8px;
   margin: 0;
   border-radius: 2px;
@@ -277,6 +460,7 @@ select {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.05rem;
+  color: var(--text);
 }
 
 .task-actions {
@@ -290,18 +474,18 @@ select {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: transparent;
-  border: 1.5px solid var(--text-dark);
+  background: #ffffff;
+  border: 1.5px solid var(--text);
   padding: 6px 10px;
   border-radius: 2px;
   cursor: pointer;
-  color: var(--text-dark);
+  color: var(--text);
   transition: background 0.15s ease, color 0.15s ease;
 }
 
 .btn-icon:hover {
-  background: var(--text-dark);
-  color: var(--paper);
+  background: var(--text);
+  color: #ffffff;
 }
 
 .btn-delete:hover {
@@ -317,9 +501,10 @@ select {
   flex-wrap: wrap;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px dashed rgba(20, 40, 42, 0.3);
+  border-top: 1px dashed rgba(20, 40, 42, 0.25);
   font-family: var(--font-mono);
   font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 .task-priority-badge {
@@ -372,6 +557,25 @@ select {
     align-items: stretch;
   }
 
+  .quick-add-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .task-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-group {
+    flex-wrap: wrap;
+  }
+
+  .search-group input {
+    min-width: 0;
+    flex: 1;
+  }
+
   .field-group {
     min-width: 0;
   }
@@ -398,8 +602,21 @@ select {
   }
 
   .add-task-section,
+  .quick-add-section,
   .task-list {
     padding: 14px;
+  }
+
+  .toolbar-group {
+    width: 100%;
+  }
+
+  .btn-toolbar {
+    flex: 1;
+  }
+
+  .search-group select {
+    flex-shrink: 0;
   }
 
   .task-main {

@@ -27,6 +27,24 @@
 
 <main class="page">
 
+  <section class="quick-add-section" aria-labelledby="quick-add-heading">
+    <h2 id="quick-add-heading" class="section-heading">
+      Quick add <span class="ai-badge">AI</span>
+    </h2>
+    <form id="quick-add-form" class="quick-add-form" novalidate>
+      <div class="field-group field-quick-add">
+        <label for="quick-add-input">Describe the task in one line</label>
+        <input type="text" id="quick-add-input" placeholder='e.g. "Submit report urgent tomorrow"' autocomplete="off">
+        <span class="field-error" id="quick-add-error" role="alert"></span>
+      </div>
+      <button type="submit" class="btn-add btn-quick-add">Parse &amp; add</button>
+    </form>
+    <p class="quick-add-hint">
+      Priority and due date are detected automatically from words like
+      <em>urgent</em>, <em>asap</em>, <em>whenever</em>, <em>tomorrow</em>, or <em>next friday</em>.
+    </p>
+  </section>
+
   <section class="add-task-section" aria-labelledby="add-task-heading">
     <h2 id="add-task-heading" class="section-heading">Add a task</h2>
 
@@ -60,6 +78,27 @@
       <h2 id="task-list-heading" class="section-heading">Your tasks</h2>
       <span class="task-count" id="task-count">0 tasks</span>
     </div>
+
+    <div class="task-toolbar">
+      <div class="toolbar-group">
+        <span class="toolbar-label">Sort</span>
+        <button type="button" class="btn-toolbar" id="sort-priority-btn">Priority</button>
+        <button type="button" class="btn-toolbar" id="sort-due-date-btn">Due date</button>
+        <button type="button" class="btn-toolbar btn-toolbar-ghost" id="sort-reset-btn">Default order</button>
+      </div>
+
+      <form id="search-form" class="toolbar-group search-group" novalidate>
+        <span class="toolbar-label">Find exact title</span>
+        <input type="text" id="search-title-input" placeholder="Exact task title…" autocomplete="off">
+        <select id="search-algo-select" aria-label="Search algorithm">
+          <option value="binary" selected>Binary</option>
+          <option value="linear">Linear</option>
+        </select>
+        <button type="submit" class="btn-toolbar">Search</button>
+      </form>
+    </div>
+
+    <p id="toolbar-status" class="toolbar-status" hidden></p>
 
     <div id="task-list" class="task-list" aria-live="polite">
       <!-- Task items are rendered here in script.js via createElement/appendChild -->

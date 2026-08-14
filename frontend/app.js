@@ -1,3 +1,4 @@
+
 /* =========================================================
    Config
    ========================================================= */
@@ -15,21 +16,41 @@ const STORAGE_KEY = "taskflow_tasks";
 /* =========================================================
    State
    ========================================================= */
-let tasks = [];
-let nextLocalId = -1; // negative ids mark tasks created while offline
+let tasks = [];               // the authoritative full task list
+let nextLocalId = -1;         // negative ids mark tasks created while offline
+let searchResultTasks = null; // null = showing `tasks`; array = showing a Section 2 search result
+let activeSortMode = null;    // null | "priority" | "due_date" — for button highlight only
 
 /* =========================================================
    DOM references
    ========================================================= */
+// Detailed add-task form
 const form = document.getElementById("add-task-form");
 const titleInput = document.getElementById("task-title");
 const dueDateInput = document.getElementById("task-due-date");
 const priorityInput = document.getElementById("task-priority");
 const titleError = document.getElementById("title-error");
+const addButton = form.querySelector(".btn-add");
+
+// Quick add (Section 3)
+const quickAddForm = document.getElementById("quick-add-form");
+const quickAddInput = document.getElementById("quick-add-input");
+const quickAddError = document.getElementById("quick-add-error");
+const quickAddButton = quickAddForm.querySelector(".btn-quick-add");
+
+// Task list
 const taskListEl = document.getElementById("task-list");
 const taskCountEl = document.getElementById("task-count");
 const emptyStateEl = document.getElementById("empty-state");
-const addButton = form.querySelector(".btn-add");
+
+// Toolbar (Section 2 — sort + search)
+const sortPriorityBtn = document.getElementById("sort-priority-btn");
+const sortDueDateBtn = document.getElementById("sort-due-date-btn");
+const sortResetBtn = document.getElementById("sort-reset-btn");
+const searchForm = document.getElementById("search-form");
+const searchTitleInput = document.getElementById("search-title-input");
+const searchAlgoSelect = document.getElementById("search-algo-select");
+const toolbarStatusEl = document.getElementById("toolbar-status");
 
 /* =========================================================
    Init
@@ -44,6 +65,14 @@ function init() {
 
   form.addEventListener("submit", handleAddTask);
   titleInput.addEventListener("input", clearTitleErrorIfValid);
+
+  quickAddForm.addEventListener("submit", handleQuickAdd);
+  quickAddInput.addEventListener("input", clearQuickAddErrorIfValid);
+
+  sortPriorityBtn.addEventListener("click", () => handleSortClick("priority"));
+  sortDueDateBtn.addEventListener("click", () => handleSortClick("due_date"));
+  sortResetBtn.addEventListener("click", handleSortReset);
+  searchForm.addEventListener("submit", handleSearchSubmit);
 }
 
 /* =========================================================
@@ -92,8 +121,14 @@ function clearTitleErrorIfValid() {
   }
 }
 
+function clearQuickAddErrorIfValid() {
+  if (quickAddInput.value.trim() !== "") {
+    quickAddError.textContent = "";
+  }
+}
+
 /* =========================================================
-   Add task
+   Add task (detailed form)
    ========================================================= */
 async function handleAddTask(event) {
   event.preventDefault(); // Requirement 12: never let the form actually submit/reload
@@ -130,6 +165,8 @@ async function handleAddTask(event) {
     tasks.push({ id: nextLocalId--, ...newTaskPayload, _unsynced: true });
   }
 
+  exitSearchMode(); // new task added — show the full (updated) list, not a stale search view
+  activeSortMode = null;
   saveToCache();
   render();
 
@@ -137,6 +174,150 @@ async function handleAddTask(event) {
   priorityInput.value = "medium";
   titleInput.focus();
   addButton.disabled = false;
+}
+
+/* =========================================================
+   Section 3 — Quick add (AI parse)
+   ========================================================= */
+async function handleQuickAdd(event) {
+  event.preventDefault();
+
+  const description = quickAddInput.value.trim();
+  if (description === "") {
+    quickAddError.textContent = "Describe the task first — e.g. \"Submit report urgent tomorrow\".";
+    quickAddInput.focus();
+    return;
+  }
+  quickAddError.textContent = "";
+
+  quickAddButton.disabled = true;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/tasks/quick-add`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: description, project_id: DEFAULT_PROJECT_ID }),
+    });
+
+    if (res.status === 422) {
+      const errorBody = await res.json();
+      quickAddError.textContent = "Could not parse that into a task — check the description and project.";
+      console.warn("Quick-add validation error:", errorBody.detail);
+      quickAddButton.disabled = false;
+      return;
+    }
+    if (!res.ok) throw new Error(`Server responded ${res.status}`);
+
+    const savedTask = await res.json();
+    tasks.push(savedTask);
+    exitSearchMode();
+    activeSortMode = null;
+    saveToCache();
+    render();
+
+    quickAddForm.reset();
+  } catch (err) {
+    quickAddError.textContent = "Could not reach the backend — is it running?";
+    console.warn("Quick-add failed:", err.message);
+  }
+
+  quickAddButton.disabled = false;
+}
+
+/* =========================================================
+   Section 2 — Sort (our own insertion_sort, via the backend)
+   ========================================================= */
+async function handleSortClick(mode) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/tasks?sort=${mode}`);
+    if (!res.ok) throw new Error(`Server responded ${res.status}`);
+    tasks = await res.json();
+    activeSortMode = mode;
+    exitSearchMode({ keepStatus: false });
+    saveToCache();
+    render();
+
+    const label = mode === "priority" ? "priority" : "due date";
+    showToolbarStatus(`Sorted by ${label} — ordering produced by our own insertion_sort(), not the database.`);
+  } catch (err) {
+    showToolbarStatus("Could not reach the backend to sort — is it running?", { isError: true });
+    console.warn("Sort request failed:", err.message);
+  }
+}
+
+async function handleSortReset() {
+  activeSortMode = null;
+  hideToolbarStatus();
+  await fetchTasksFromServer(); // plain GET /tasks — natural database order
+}
+
+/* =========================================================
+   Section 2 — Exact-title search (our own binary/linear search)
+   ========================================================= */
+async function handleSearchSubmit(event) {
+  event.preventDefault();
+
+  const title = searchTitleInput.value.trim();
+  const algo = searchAlgoSelect.value;
+
+  if (title === "") {
+    showToolbarStatus("Type an exact task title to search for.", { isError: true });
+    return;
+  }
+
+  try {
+    const url = `${API_BASE_URL}/tasks/search?title=${encodeURIComponent(title)}&algo=${algo}`;
+    const res = await fetch(url);
+
+    if (res.status === 404) {
+      searchResultTasks = [];
+      emptyStateEl.textContent = `No task titled "${title}" (via ${algo} search). Try the other algorithm, or clear the search.`;
+      render();
+      showToolbarStatus(`No match for "${title}" via ${algo} search.`, { isError: true, showClear: true });
+      return;
+    }
+    if (!res.ok) throw new Error(`Server responded ${res.status}`);
+
+    const foundTask = await res.json();
+    searchResultTasks = [foundTask];
+    render();
+    showToolbarStatus(`Found via ${algo} search — showing 1 of ${tasks.length} tasks.`, { showClear: true });
+  } catch (err) {
+    showToolbarStatus("Could not reach the backend to search — is it running?", { isError: true });
+    console.warn("Search request failed:", err.message);
+  }
+}
+
+function exitSearchMode({ keepStatus = false } = {}) {
+  searchResultTasks = null;
+  searchTitleInput.value = "";
+  emptyStateEl.textContent = "Nothing here yet — add your first task above.";
+  if (!keepStatus) hideToolbarStatus();
+}
+
+function showToolbarStatus(message, { isError = false, showClear = false } = {}) {
+  toolbarStatusEl.textContent = "";
+  toolbarStatusEl.append(message);
+
+  if (showClear) {
+    const clearBtn = document.createElement("button");
+    clearBtn.type = "button";
+    clearBtn.className = "toolbar-status-clear";
+    clearBtn.textContent = "Clear";
+    clearBtn.addEventListener("click", () => {
+      exitSearchMode();
+      render();
+    });
+    toolbarStatusEl.appendChild(clearBtn);
+  }
+
+  toolbarStatusEl.classList.toggle("status-error", isError);
+  toolbarStatusEl.hidden = false;
+}
+
+function hideToolbarStatus() {
+  toolbarStatusEl.hidden = true;
+  toolbarStatusEl.textContent = "";
 }
 
 /* =========================================================
@@ -157,6 +338,8 @@ async function handleDeleteTask(taskId) {
   }
 
   tasks = tasks.filter((t) => t.id !== taskId);
+  exitSearchMode();
+  activeSortMode = null;
   saveToCache();
   render();
 }
@@ -195,6 +378,8 @@ async function saveEditedTask(taskId, updatedFields) {
     tasks = tasks.map((t) => (t.id === taskId ? { ...t, ...updatedFields } : t));
   }
 
+  exitSearchMode();
+  activeSortMode = null;
   saveToCache();
   render();
   return true;
@@ -209,16 +394,25 @@ function render() {
     taskListEl.removeChild(taskListEl.firstChild);
   }
 
-  if (tasks.length === 0) {
+  // Section 2: when a search result is active, show that filtered view;
+  // otherwise show the full authoritative task list.
+  const listToRender = searchResultTasks !== null ? searchResultTasks : tasks;
+
+  if (listToRender.length === 0) {
     emptyStateEl.hidden = false;
   } else {
     emptyStateEl.hidden = true;
-    tasks.forEach((task) => {
+    listToRender.forEach((task) => {
       taskListEl.appendChild(createTaskElement(task));
     });
   }
 
+  // Task count always reflects the true total, not the current search view.
   taskCountEl.textContent = `${tasks.length} task${tasks.length === 1 ? "" : "s"}`;
+
+  // Highlight whichever sort button is currently active, if any.
+  sortPriorityBtn.classList.toggle("active", activeSortMode === "priority");
+  sortDueDateBtn.classList.toggle("active", activeSortMode === "due_date");
 }
 
 function createTaskElement(task) {
