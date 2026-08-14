@@ -4,11 +4,8 @@ Pydantic Schemas & Custom Validators
 Request/response models for Users, Projects and Tasks.
 """
 
-
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
-
-
 
 
 # --- USER SCHEMAS ---
@@ -23,7 +20,6 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-
 
     class Config:
         from_attributes = True
@@ -42,7 +38,6 @@ class ProjectCreate(ProjectBase):
 class ProjectResponse(ProjectBase):
     id: int
 
-
     class Config:
         from_attributes = True
 
@@ -54,7 +49,6 @@ class TaskBase(BaseModel):
     due_date: Optional[str] = None
     status: Optional[str] = "pending"
     project_id: int
-
 
     # Custom Validator: Blank or whitespace-only check
     @field_validator("title")
@@ -80,7 +74,12 @@ class TaskUpdate(BaseModel):
 class TaskResponse(TaskBase):
     id: int
 
-
     class Config:
         from_attributes = True
 
+
+# --- SECTION 3: QUICK-ADD SCHEMA ---
+class QuickAddRequest(BaseModel):
+    """POST /tasks/quick-add request body."""
+    description: str = Field(..., min_length=1)
+    project_id: int
