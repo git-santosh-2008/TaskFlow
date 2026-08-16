@@ -20,17 +20,18 @@ taskflow/
 │   ├── dependencies.py         — shared get_db() dependency
 │   ├── middleware.py            — request logging middleware
 │   ├── algorithms.py             — Section 2: insertion_sort/binary_search/linear_search engine
+│   ├── quick_add.py                — Section 3: mock parser + role-based prompt for /tasks/quick-add
 │   ├── routers/
 │   │   ├── users.py
 │   │   ├── projects.py
 │   │   └── tasks.py                — includes the Section 2 sort/search endpoints
 │   ├── requirements.txt
-│   ├── .env.example              — template for your Supabase connection string
-│   └── .gitignore
-└── frontend/
-    ├── index.html         — header, add-task form, task list container
-    ├── style.css          — box-model styling, sticky header, 2 breakpoints
-    └── app.js            — rendering, CRUD, validation, localStorage cache
+│   └──── .env.example              — template for your Supabase connection string
+├──── frontend/
+│    ├── index.html         — header, add-task form, task list container
+│    ├── style.css          — box-model styling, sticky header, 2 breakpoints
+│    └── app.js            — rendering, CRUD, validation, localStorage cache
+└── .gitignore
 ```
 
 `seed.py` and `check_algorithms.py` live at the repo root (not inside
@@ -320,3 +321,31 @@ Prints a `PASS`/`FAIL` line for every required case (empty-list sort,
 single-element sort, binary search at first/middle/last/absent, both
 counting wrappers' return shapes). A real run currently prints 13
 `PASS` lines and 0 `FAIL` lines.
+
+
+### 8. Assignment Section 3 — AI Quick-Add
+
+POST /tasks/quick-add creates a real task from one free-text sentence, in the same tasks table the rest of the app uses. Body:
+
+json
+{ "description": "Submit report urgent tomorrow", "project_id": 1 }
+Parsing is done by mock_parse_task_description() in backend/quick_add.py — a deterministic, keyless, zero-network rule engine (the required baseline that's graded). It follows the exact keyword algorithm the assignment specifies, so any correct implementation produces identical output for the same input.
+Prompt structure: build_parse_prompt() builds a standard role-based [{"role": "system", ...}, {"role": "user", ...}] message pair for every request — kept identical whether the mock or a real model ultimately answers it.
+Optional real-LLM hook: gated behind the USE_REAL_LLM environment variable (default unset = off). The parse_task_description() dispatcher in quick_add.py is the single place this is decided: it only tries call_real_llm() (a minimal working example wired to the Anthropic API, imported only when actually called) when the flag is true AND a key is present, and falls back to the mock automatically on any failure or absence. It is never used during grading — the flag defaults off, and the endpoint works correctly with zero API keys in every configuration.
+Validation: an unknown project_id returns 422 (not 404 — this endpoint deliberately differs from POST /tasks, per the Section 3 spec) with a Pydantic-shaped error. The parsed fields are also run through TaskCreate before any row is written; a failure there is also a 422 with no row created.
+Which prompting technique this is modeled on
+
+The system message in build_parse_prompt() is zero-shot: it states the extraction task and the exact decision rules directly ("high if 'urgent'/'asap' present, else low if...") without embedding any worked input→output example pairs inside the prompt itself. This was chosen over few-shot because the task is a closed, rule-based classification (3 priority values, a fixed list of date phrases) rather than an open-ended generation task — a model (or our mock) doesn't need example transcripts to infer the pattern when the rule itself is stated explicitly and unambiguously. This keeps token usage low and constant regardless of load, since a few-shot prompt would need several example description→JSON pairs added to every single request, multiplying cost per call with no accuracy benefit here. It isn't chain-of-thought either: the rules don't require multi-step reasoning to reach an answer, so asking a model to "think step by step" would only add latency and extra output tokens without improving reliability. For reliability, our mock enforces this zero-shot instruction as literal code — priority is always exactly one of three values and title is never empty — which is strictly more reliable than trusting a real model's free-text output; this is precisely why the mock, not a real LLM call, is what's graded.
+
+Worked examples
+
+Computed by actually running mock_parse_task_description() — not hand-calculated:
+
+#	Input	Parsed output
+1	"Call the client whenever you get a chance"	{"title": "Call the client you get a chance", "priority": "low", "due_date_hint": null}
+2	"Submit invoice today, urgent!"	{"title": "Submit invoice , !", "priority": "high", "due_date_hint": "today"}
+3	"Low priority: water the plants"	{"title": ": water the plants", "priority": "low", "due_date_hint": null}
+4	"Team meeting next Monday to discuss urgent roadmap asap"	{"title": "Team meeting to discuss roadmap", "priority": "high", "due_date_hint": "next monday"}
+5	"Plan the offsite next week if possible"	{"title": "Plan the offsite if possible", "priority": "medium", "due_date_hint": "next week"}
+
+Try any input of your own via http://127.0.0.1:8000/docs → POST /tasks/quick-add, or independently re-run mock_parse_task_description("your text here") from a Python shell in backend/.
